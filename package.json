@@ -1,0 +1,15 @@
+{
+    "name": "timeseries",
+    "description": "",
+    "homepage": "",
+    "maintainers": [
+        {
+            "name": "K. Arthur Endsley",
+            "email": "kaendsle@mtu.edu",
+            "web": "https://github.com/arthur-e" 
+        } 
+    ],
+    "dependencies": {
+        "moment": "latest"
+    }
+}
