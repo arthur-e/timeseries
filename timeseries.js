@@ -2,7 +2,7 @@
     Array.map polyfill
  */
 if (!Array.prototype.map) {
-    Array.prototype.map = function (fun /*, thisArg */) {
+    Array.prototype.map = function (fun, thisArg) {
         'use strict';
 
         if (this === void 0 || this === null) {
@@ -84,6 +84,39 @@ if (!Array.prototype.map) {
             throw Error('There is not a time for every data value; data and time Arrays are not the same length');
         }
 	};
+
+    /**TODO
+     */
+    TimeSeries.prototype.resample = function (interval, units, operation, closed) {
+        var i = 0;
+        var j = 0;
+        var ds = [];
+        var ts = [];
+        var t0 = this._time[0];
+        var t1 = t0.clone().add(interval, units);
+
+        while (j < this._data.length) {
+            if (this._time[j].isSame(t1) || this._time[j].isAfter(t1)) {
+                // Call the operation on the subsequence of data from the last
+                //  time point to the current
+                if (!this._time[j].isSame(t1) && closed === 'left') {
+                    ds.push(operation.call(this, this._data.slice(i, j)));
+                } else {
+                    ds.push(operation.call(this, this._data.slice(i, j + 1)));
+                }
+
+                ts.push(this._time[j]);
+
+                // Update the forward-looking timestamp
+                t1.add(interval, units);
+                i = j;
+            }
+
+            j += 1;
+        }
+
+        return new TimeSeries([ds, ts]);
+    };
 
 	// Following Underscore module pattern (http://underscorejs.org/docs/underscore.html)
 	if (typeof exports !== 'undefined') {
