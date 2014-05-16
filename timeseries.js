@@ -73,54 +73,59 @@ if (!Array.prototype.map) {
 
     /**
         Represents a time series using input Array(s); an Array of data values
-        and, optionally, an Array of time stamps or Date objects. There are two
-        ways of specifying the series...
-         i) Provide nested [ [data], [times] ] Arrays
-        ii) Provide [data] Array and start time, interval size, and interval type
-        @param  series      {Array}     Either an Array of data or an Array of an Array of data and an Array of time stamps
-        @param  start       {Date|String}
-        @param  interval    {Number}
-        @param  units       {String}    e.g. "minute"|"minutes"|"hour"|"hours"|"day"|"days"...
+        and, optionally, an Array of time stamps or Date objects. Only the data
+        need to be provided at instantiation; optionally, generate() can be
+        called to generate the time series' time values.
+        @param  series      {Array}     An Array of data
+        @param  timestamps  {Array}     An Array of timestamps (Stings) or Date objects
         @return             {TimeSeries}
      */
-	function TimeSeries (series, start, interval, units) {
-        var i, t0, t1;
-
-        if (interval !== undefined) {
-            if (typeof interval !== 'number') {
-                throw TypeError('Expected "interval" argument to be a Number');
-            }
-        }
-
-        if (isArray(series[0])) {
-            this._data = series[0];
-            this._time = series[1];
+	function TimeSeries (series, timestamps) {
+        this._data = series;
+        if (isArray(timestamps)) {
+            this._time = timestamps;
 
             if (this._time[0]._isAMomentObject !== true) {
                 this._time.map(function (t) {
                     return moment.utc(t);
                 });
             }
+        }
 
-        } else {
-            t0 = moment.utc(start);
-            t1 = t0.clone();
-            this._data = series;
-            this._time = [t0];
+        return this;
+	};
 
-            i = 1;
-            while (i < this._data.length) {
-                t1.add(interval, units);
-                this._time.push(t1.clone());
-                i += 1;
-            }
+    /** Generates the time values for the time series, if they weren't provided,
+        starting with the specified time and continuing monotonically by
+        the interval size and type of interval (units) specified e.g. adding a
+        timestamp every 3 hours.
+        @param  start       {Date|String}
+        @param  interval    {Number}
+        @param  units       {String}    e.g. "minute"|"minutes"|"hour"|"hours"|"day"|"days"...
+     */
+    TimeSeries.prototype.generate = function (start, interval, units) {
+        var t0 = moment.utc(start);
+        var t1 = t0.clone();
 
+        if (typeof interval !== 'number') {
+            throw TypeError('Expected "interval" argument to be a Number');
+        }
+
+        this._time = [t0];
+
+        i = 1;
+        while (i < this._data.length) {
+            t1.add(interval, units);
+            this._time.push(t1.clone());
+            i += 1;
         }
 
         if (this._data.length !== this._time.length) {
             throw Error('There is not a time for every data value; data and time Arrays are not the same length');
         }
-	};
+
+        return this;
+    };
 
     /**
         Resamples the time series, producing a new TimeSeries instance. Only
@@ -164,7 +169,7 @@ if (!Array.prototype.map) {
             j += 1;
         }
 
-        return new TimeSeries([ds, ts]);
+        return new TimeSeries(ds, ts);
     };
 
 	// Following Underscore module pattern (http://underscorejs.org/docs/underscore.html)
