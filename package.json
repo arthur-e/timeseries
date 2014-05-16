@@ -1,6 +1,6 @@
 {
     "name": "timeseries",
-    "description": "",
+    "description": "0.0.1",
     "homepage": "",
     "maintainers": [
         {
@@ -10,7 +10,6 @@
         } 
     ],
     "dependencies": {
-        "moment": "latest",
-        "underscore": "latest"
+        "moment": "latest"
     }
 }

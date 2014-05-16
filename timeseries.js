@@ -1,3 +1,30 @@
+/**@license
+ *
+ *  The MIT License (MIT)
+ *
+ *  Copyright (C) 2014 K. Arthur Endsley (kaendsle@mtu.edu)
+ *  Michigan Tech Research Institute (MTRI)
+ *  3600 Green Court, Suite 100, Ann Arbor, MI, 48105
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ */
+
 /** 
     Array.map polyfill
  */
@@ -35,16 +62,26 @@ if (!Array.prototype.map) {
         moment = require('moment');
     }
 
-    /**TODO
+    /**
+        Tests whether or not the passed Object is an Array.
+        @param  obj {Object}
+        @return     {Boolean}
      */
     function isArray (obj) {
 		return !!(obj && obj.constructor === Array);
 	};
 
-    /**TODO
-        Two ways of specifying the series...
-         i) Provide nested [data, times] Arrays
+    /**
+        Represents a time series using input Array(s); an Array of data values
+        and, optionally, an Array of time stamps or Date objects. There are two
+        ways of specifying the series...
+         i) Provide nested [ [data], [times] ] Arrays
         ii) Provide [data] Array and start time, interval size, and interval type
+        @param  series      {Array}     Either an Array of data or an Array of an Array of data and an Array of time stamps
+        @param  start       {Date|String}
+        @param  interval    {Number}
+        @param  units       {String}    e.g. "minute"|"minutes"|"hour"|"hours"|"day"|"days"...
+        @return             {TimeSeries}
      */
 	function TimeSeries (series, start, interval, units) {
         var i, t0, t1;
@@ -85,7 +122,15 @@ if (!Array.prototype.map) {
         }
 	};
 
-    /**TODO
+    /**
+        Resamples the time series, producing a new TimeSeries instance. Only
+        downsampling (from higher temporal resolution to lower resolution) is
+        currently supported.
+        @param  interval    {Number}
+        @param  units       {String}    e.g. "hour"|"hours"|"day"|"days"...
+        @param  operation   {Function}  A Function that takes an Array argument and returns a value
+        @param  close       {String}    e.g. "right"|"left"
+        @return             {TimeSeries}
      */
     TimeSeries.prototype.resample = function (interval, units, operation, closed) {
         var i = 0;
@@ -94,6 +139,10 @@ if (!Array.prototype.map) {
         var ts = [];
         var t0 = this._time[0];
         var t1 = t0.clone().add(interval, units);
+
+        if (t1.isBefore(this._time[1])) {
+            throw Error('Upsampling is not currently supported; specified interval must be a lower temporal resolution than the original');
+        }
 
         while (j < this._data.length) {
             if (this._time[j].isSame(t1) || this._time[j].isAfter(t1)) {
